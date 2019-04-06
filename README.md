@@ -4,13 +4,17 @@ OWASP Seraphimdroid
 
 # About me
 Name: xihajun
+
 University: University of Bristol
+
 Email: mw18386@bristol.ac.uk
+
 I am studying MSc Mathematics of Cybersecurity in the University of Bristol. I believe I am qualified for this project because I have the following abilities:
-Familiar with a series of machine learning techniques
-Understood the cybersecurity knowledge
-Had the experience to do anomaly detection
-Had the experience to deal with unbalanced data
+
+* Familiar with a series of machine learning techniques
+* Understood the cybersecurity knowledge
+* Had the experience to do anomaly detection
+* Had the experience to deal with unbalanced data
 
 # Project Name
 OWASP Seraphimdroid
