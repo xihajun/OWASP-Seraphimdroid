@@ -1,4 +1,4 @@
-# (Draft) Proposal for GSoC 2019
+# Proposal for GSoC 2019
 OWASP Seraphimdroid
 
 
