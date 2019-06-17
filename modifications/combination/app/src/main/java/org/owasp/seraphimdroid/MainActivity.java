@@ -58,7 +58,6 @@ import org.owasp.seraphimdroid.services.CheckAppLaunchThread;
 import org.owasp.seraphimdroid.services.OutGoingSmsRecepter;
 import org.owasp.seraphimdroid.services.ServicesLockService;
 
-import org.anothermonitor.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -237,7 +236,6 @@ public class MainActivity extends FragmentActivity {
 
 		adapter = new DrawerAdapter(this, listItems);
 		drawerList.setAdapter(adapter);
-        // Junfan
 		drawerList.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
@@ -246,10 +244,6 @@ public class MainActivity extends FragmentActivity {
 				if (position == 6){
 					getIntent().removeExtra("tags");
 					selectFragment(6);
-				} else if(position == 8){
-
-					Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
-					startActivity(intent);
 				} else{
 					selectFragment(position);
 				}
@@ -309,9 +303,9 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	// Setter for 'unlocked' variable
-public static void setUnlocked(boolean unlocked) {
+	public static void setUnlocked(boolean unlocked) {
 		isUnlocked = unlocked;
-}
+	}
 
 	private void populateList() {
 		// populate the list.
@@ -333,10 +327,9 @@ public static void setUnlocked(boolean unlocked) {
 				R.drawable.ic_launcher)));
 		listItems.add(new DrawerItem(itemNames[8], iconList.getResourceId(8,
 				R.drawable.ic_launcher)));
-		// Junfan add items
 		listItems.add(new DrawerItem(itemNames[9], iconList.getResourceId(9,
 				R.drawable.ic_launcher)));
-		// Junfan
+
 		iconList.recycle();
 	}
 
@@ -447,43 +440,10 @@ public static void setUnlocked(boolean unlocked) {
 				recordUsage(7);
 				fragment = new org.owasp.seraphimdroid.EducateFragment();
 				break;
-			// Junfan add cpu usage activity
 			case 7:
 				//Intent intent = null;
-				int i = 0;
-				if(i !=0){
-					if (new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain") !=null){
-						Intent intent = new Intent();
-						intent.setComponent(new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain"));
-						startActivity(intent);
 
-						//intent.setComponent(new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain"));
-						//fragment = new org.owasp.seraphimdroid.Test();
-						//import org.anothermonitor.ActivityMain;
-						//intent = new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
-						//startActivity(intent);
-					}
-				}
-				else{
-					Intent intent = new Intent(MainActivity.this, ActivityMain.class);
-					startActivity(intent);
-				}
-				//intent.setComponent(new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain"));
-				//fragment = new org.owasp.seraphimdroid.Test();
-				//import org.anothermonitor.ActivityMain;
-				//intent = new Intent(this, org.anothermonitor.ActivityMain.class);
-				//startActivity(intent);
-				//try {
-				//	intent = new Intent(this,
-				//			Class.forName("org.anothermonitor.ActivityMain"));
-				//	startActivity(intent);
-				//} catch (ClassNotFoundException e) {
-				//	e.printStackTrace();
-				//}
-				//Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
-				//startActivity(intent);
 				break;
-			// Junfan
 			case 8: {
 				if (prevSupportFlag != null) {
 					FragmentManager fragMan = getSupportFragmentManager();

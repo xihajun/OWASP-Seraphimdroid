@@ -121,18 +121,6 @@
             android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" >
         </activity>
 
-
-        <activity
-            android:name="org.anothermonitor.ActivityMain"
-            android:launchMode="singleTask" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name="org.anothermonitor.ActivityProcesses" />
-        <activity android:name="org.anothermonitor.ActivityHelp" />
-        <activity android:name="org.anothermonitor.ActivityAbout" />
         <!-- Service Declaration -->
         <service
             android:name="org.owasp.seraphimdroid.services.AppLockService"

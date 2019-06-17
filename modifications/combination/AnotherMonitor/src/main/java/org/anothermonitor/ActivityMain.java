@@ -250,7 +250,7 @@ public class ActivityMain extends Activity implements ActivityCompat.OnRequestPe
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		startService(new Intent(this, ServiceReader.class));
-		setContentView(R.layout.activity_main_an);
+		setContentView(R.layout.activity_main);
 		
 		mPrefs = getSharedPreferences(getString(R.string.app_name) + C.prefs, MODE_PRIVATE);
 		intervalRead = mPrefs.getInt(C.intervalRead, C.defaultIntervalUpdate);
