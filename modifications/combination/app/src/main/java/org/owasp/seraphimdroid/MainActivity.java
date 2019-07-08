@@ -1,5 +1,4 @@
 package org.owasp.seraphimdroid;
-//package org.anothermonitor;
 
 import android.annotation.TargetApi;
 import android.app.AlarmManager;
@@ -23,13 +22,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.widget.DrawerLayout;
+import androidx.annotation.NonNull;
+import androidx.legacy.app.ActionBarDrawerToggle;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.drawerlayout.widget.DrawerLayout;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MenuItem;
@@ -46,6 +45,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.anothermonitor.ActivityMain;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.owasp.seraphimdroid.adapter.DrawerAdapter;
@@ -57,7 +57,6 @@ import org.owasp.seraphimdroid.receiver.SettingsCheckAlarmReceiver;
 import org.owasp.seraphimdroid.services.CheckAppLaunchThread;
 import org.owasp.seraphimdroid.services.OutGoingSmsRecepter;
 import org.owasp.seraphimdroid.services.ServicesLockService;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -179,9 +178,10 @@ public class MainActivity extends FragmentActivity {
 		//Set SIM id if not set
 		TelephonyManager telephony = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		String hash = null;
-		if(telephony.getSimSerialNumber()!=null) {
-			hash = telephony.getSimSerialNumber() + telephony.getNetworkOperator() + telephony.getNetworkCountryIso();
-		}
+//		Junfan
+//		if(telephony.getSimSerialNumber()!=null) {
+//			hash = telephony.getSimSerialNumber() + telephony.getNetworkOperator() + telephony.getNetworkCountryIso();
+//		}
 		if(hash!=null && defaults.contains("sim_1")==false) {
 			defaults.edit().putString("sim_1", hash).apply();
 		}
@@ -236,6 +236,7 @@ public class MainActivity extends FragmentActivity {
 
 		adapter = new DrawerAdapter(this, listItems);
 		drawerList.setAdapter(adapter);
+        // Junfan
 		drawerList.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
@@ -244,7 +245,13 @@ public class MainActivity extends FragmentActivity {
 				if (position == 6){
 					getIntent().removeExtra("tags");
 					selectFragment(6);
-				} else{
+				}
+//				else if(position == 8){
+//
+//					Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
+//					startActivity(intent);
+//				}
+				else{
 					selectFragment(position);
 				}
 			}
@@ -303,9 +310,9 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	// Setter for 'unlocked' variable
-	public static void setUnlocked(boolean unlocked) {
+public static void setUnlocked(boolean unlocked) {
 		isUnlocked = unlocked;
-	}
+}
 
 	private void populateList() {
 		// populate the list.
@@ -327,9 +334,12 @@ public class MainActivity extends FragmentActivity {
 				R.drawable.ic_launcher)));
 		listItems.add(new DrawerItem(itemNames[8], iconList.getResourceId(8,
 				R.drawable.ic_launcher)));
+		// Junfan add items
 		listItems.add(new DrawerItem(itemNames[9], iconList.getResourceId(9,
 				R.drawable.ic_launcher)));
-
+		listItems.add(new DrawerItem(itemNames[10], iconList.getResourceId(10,
+				R.drawable.ic_launcher)));
+		// Junfan
 		iconList.recycle();
 	}
 
@@ -440,11 +450,29 @@ public class MainActivity extends FragmentActivity {
 				recordUsage(7);
 				fragment = new org.owasp.seraphimdroid.EducateFragment();
 				break;
+			// Junfan add cpu usage activity
 			case 7:
-				//Intent intent = null;
+				// if the app is already in
+				int i = 0;
+				if(i !=0){
+					if (new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain") !=null){
+						Intent intent = new Intent();
+						intent.setComponent(new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain"));
+						startActivity(intent);
+					}
+				}
+				else{
+					Intent intent_cpu = new Intent(MainActivity.this, ActivityMain.class);
+					startActivity(intent_cpu);
+				}
 
 				break;
-			case 8: {
+			case 8:
+				Intent intent_network = new Intent(MainActivity.this, ca.rmen.android.networkmonitor.app.main.MainActivity.class);
+				startActivity(intent_network);
+				break;
+			// Junfan
+			case 9: {
 				if (prevSupportFlag != null) {
 					FragmentManager fragMan = getSupportFragmentManager();
 					fragMan.beginTransaction().remove(prevSupportFlag).commit();
@@ -461,7 +489,7 @@ public class MainActivity extends FragmentActivity {
 				prevFrag = frag;
 			}
 			break;
-			case 9:
+			case 10:
 				fragment = new org.owasp.seraphimdroid.AboutFragment();
 				break;
 			default:

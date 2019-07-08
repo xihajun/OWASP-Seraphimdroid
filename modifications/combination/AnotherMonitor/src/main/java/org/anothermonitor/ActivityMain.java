@@ -43,8 +43,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.*;
 import android.os.Process;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.view.*;
 import android.widget.Button;
@@ -250,7 +250,7 @@ public class ActivityMain extends Activity implements ActivityCompat.OnRequestPe
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		startService(new Intent(this, ServiceReader.class));
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_main_an);
 		
 		mPrefs = getSharedPreferences(getString(R.string.app_name) + C.prefs, MODE_PRIVATE);
 		intervalRead = mPrefs.getInt(C.intervalRead, C.defaultIntervalUpdate);
@@ -364,7 +364,7 @@ public class ActivityMain extends Activity implements ActivityCompat.OnRequestPe
 				}
 			});
 //		I came across with a Vodafone Ultra phone which had the Menu button implemented as an apps Navigation bar button long-click.
-//		With the below code and with these rare phones the AnotherMonitor menu button was hidden. Not anymore.
+//		With the below code and with these rare phones the SeraphimDroid menu button was hidden. Not anymore.
 /*		} else {
 			mLButtonMenu.setVisibility(View.GONE);
 			int paddingTop = mLTopBar.getPaddingTop();
