@@ -154,7 +154,11 @@
 
         <activity
             android:name="org.anothermonitor.ActivityMain"
-            android:launchMode="singleTask" >
+            android:parentActivityName=".BlacklistActivity"
+            android:configChanges="keyboard|keyboardHidden|screenSize|orientation"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Holo.Light">
+            <!--fix the bugy-->
         </activity>
         <activity android:name="org.anothermonitor.ActivityProcesses" />
         <activity android:name="org.anothermonitor.ActivityHelp" />
@@ -269,8 +273,9 @@
 
         <activity
             android:name="ca.rmen.android.networkmonitor.app.main.MainActivity"
+            android:parentActivityName=".BlacklistActivity"
             android:label="@string/app_name"
-            tools:ignore="ExportedPreferenceActivity" >
+            tools:ignore="ExportedPreferenceActivity">
             <!--<intent-filter>-->
             <!--<action android:name="android.intent.action.MAIN" />-->
 

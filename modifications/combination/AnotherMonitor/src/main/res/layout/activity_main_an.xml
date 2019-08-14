@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android" >
+
+
 	<LinearLayout
 	    android:id="@+id/LParent"
 	    android:layout_width="match_parent"
@@ -518,5 +520,17 @@
     	android:layout_gravity="bottom"
 	    android:background="@drawable/gradient_nb"
 	    android:visibility="gone" />
+
+	<!--<ListView-->
+		<!--android:id="@+id/drawer_list"-->
+		<!--android:layout_width="240dp"-->
+		<!--android:layout_height="match_parent"-->
+		<!--android:layout_gravity="start"-->
+		<!--android:background="@color/list_bg"-->
+		<!--android:choiceMode="singleChoice"-->
+		<!--android:divider="@color/divider"-->
+		<!--android:dividerHeight="1dp"-->
+		<!--android:listSelector="@drawable/list_selector" >-->
+	<!--</ListView>-->
 
 </merge>

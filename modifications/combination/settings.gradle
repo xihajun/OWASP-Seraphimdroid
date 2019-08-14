@@ -1,2 +1,2 @@
-include ':app', ':lucenedroid', ':AnotherMonitor', ':networkmonitor'
+include ':app', ':lucenedroid', ':AnotherMonitor', ':networkmonitor', ':tensorflow-android-1.13.0-rc0'
 project(':AnotherMonitor').projectDir = new File('AnotherMonitor')

@@ -1125,9 +1125,17 @@ public class ActivityMain extends Activity implements ActivityCompat.OnRequestPe
 			mBChooseProcess.setEnabled(false);
 			mLButtonRecord.setImageResource(R.drawable.button_stop_record);
 		} else {
-			mSBRead.setEnabled(true);
-			mBChooseProcess.setEnabled(true);
-			mLButtonRecord.setImageResource(R.drawable.button_start_record);
+			if (Build.VERSION.SDK_INT >= 23){
+				mSBRead.setEnabled(true);
+				mBChooseProcess.setEnabled(false);
+				mLButtonRecord.setImageResource(R.drawable.button_start_record);
+			}
+			else{
+				mSBRead.setEnabled(true);
+				mBChooseProcess.setEnabled(true);
+				mLButtonRecord.setImageResource(R.drawable.button_start_record);
+			}
+
 		}
 	}
 	

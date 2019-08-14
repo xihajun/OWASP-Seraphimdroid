@@ -40,22 +40,31 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.*;
 import android.os.Debug.MemoryInfo;
 import android.os.Process;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
 import android.util.Log;
 import android.widget.Toast;
+
+//import android.os;
+import org.tensorflow.Operation;
+import org.tensorflow.contrib.android.RunStats;
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
+
 
 public class ServiceReader extends Service {
 	
 	private boolean /*threadSuspended, */recording, firstRead = true, topRow = true;
-	private int memTotal, pId, intervalRead, intervalUpdate, intervalWidth, maxSamples = 2000;
+	private int memTotal, pId, intervalRead, intervalUpdate, intervalWidth, maxSamples = 2002;
 	private long workT, totalT, workAMT, total, totalBefore, work, workBefore, workAM, workAMBefore;
 	private String s;
 	private String[] sa;
-	private List<Float> cpuTotal, cpuAM;
+	private List<Float> cpuTotal, cpuAM, Input_20, dis_auto, dis_RNN;
 	private List<Integer> memoryAM;
 	private List<Map<String, Object>> mListSelected; // Integer		 C.pId
 												  // String		 C.pName
@@ -67,6 +76,7 @@ public class ServiceReader extends Service {
 	private Debug.MemoryInfo[] amMI;
 	private ActivityManager.MemoryInfo mi;
 	private NotificationManager mNM;
+
 	private Notification mNotificationRead, mNotificationRecord;
 	private BufferedReader reader;
 	private BufferedWriter mW;
@@ -78,8 +88,15 @@ public class ServiceReader extends Service {
 			// The service makes use of an explicit Thread instead of a Handler because with the Threat the code is executed more synchronously.
 			// However the ViewGraphic is drew with a Handler because the drawing code must be executed in the UI thread.
 			Thread thisThread = Thread.currentThread();
+
+			String MODEL_FILE = "file:///android_asset/model2.pb";  //Load tensorflow Model
+			TensorFlowInferenceInterface tensorflow = new TensorFlowInferenceInterface(getAssets(), MODEL_FILE);
+
+			String MODEL_FILE_RNN = "file:///android_asset/model_RNN_1.pb";  //Load tensorflow Model
+			TensorFlowInferenceInterface tensorflow_RNN = new TensorFlowInferenceInterface(getAssets(), MODEL_FILE_RNN);
+
 			while (readThread == thisThread) {
-				read();
+				read(tensorflow, tensorflow_RNN);
 				try {
 					Thread.sleep(intervalRead);
 /*					synchronized (this) {
@@ -152,7 +169,12 @@ public class ServiceReader extends Service {
 		memFree = new ArrayList<String>(maxSamples);
 		cached = new ArrayList<String>(maxSamples);
 		threshold = new ArrayList<String>(maxSamples);
-		
+		Input_20 = new ArrayList<Float>(maxSamples*6);
+		dis_auto = new ArrayList<Float>(maxSamples);
+		dis_RNN = new ArrayList<Float>(maxSamples);
+		dis_auto.add(0,0f);
+		dis_RNN.add(0,0f);
+
 		pId = Process.myPid();
 		
 		am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -170,9 +192,9 @@ public class ServiceReader extends Service {
 		registerReceiver(receiverStartRecord, new IntentFilter(C.actionStartRecord));
 		registerReceiver(receiverStopRecord, new IntentFilter(C.actionStopRecord));
 		registerReceiver(receiverClose, new IntentFilter(C.actionClose));
-		
+
 		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		
+
 		PendingIntent contentIntent =  TaskStackBuilder.create(this)
 //				.addParentStack(ActivityMain.class)
 //				.addNextIntent(new Intent(this, ActivityMain.class))
@@ -209,7 +231,7 @@ public class ServiceReader extends Service {
 				.addAction(R.drawable.icon_stop_sb, getString(R.string.menu_stop_record), pIStopRecord)
 				.addAction(R.drawable.icon_times_ai, getString(R.string.menu_close), pIClose)
 				.build();
-		
+
 //		mNM.notify(0, mNotificationRead);
 		startForeground(10, mNotificationRead); // If not the AM service will be easily killed when a heavy-use memory app (like a browser or Google Maps) goes onto the foreground
 	}
@@ -254,15 +276,24 @@ public class ServiceReader extends Service {
 	
 	@SuppressLint("NewApi")
 	@SuppressWarnings("unchecked")
-	private void read() {
+	private void read(TensorFlowInferenceInterface tensorflow, TensorFlowInferenceInterface tensorflow_RNN) {
+//		String MODEL_FILE = "file:///android_asset/model2.pb";  //模型存放路径
+//		TensorFlowInferenceInterface tensorflow = new TensorFlowInferenceInterface(getAssets(), MODEL_FILE);
+
 		try {
 			reader = new BufferedReader(new FileReader("/proc/meminfo"));
 			s = reader.readLine();
 			while (s != null) {
 				// Memory is limited as far as we know
 				while (memFree.size() >= maxSamples) {
-					cpuTotal.remove(cpuTotal.size() - 1);
-					cpuAM.remove(cpuAM.size() - 1);
+					try{
+						cpuTotal.remove(cpuTotal.size() - 1);
+						cpuAM.remove(cpuAM.size() - 1);
+					}catch (Throwable t){
+						System.out.println("cpu_fail");
+						System.out.println(cpuTotal.size());
+					}
+
 					memoryAM.remove(memoryAM.size() - 1);
 					
 					memUsed.remove(memUsed.size() - 1);
@@ -396,10 +427,10 @@ public class ServiceReader extends Service {
 				totalT = total - totalBefore;
 				workT = work - workBefore;
 				workAMT = workAM - workAMBefore;
-				
+
 				cpuTotal.add(0, restrictPercentage(workT * 100 / (float) totalT));
 				cpuAM.add(0, restrictPercentage(workAMT * 100 / (float) totalT));
-				
+
 				if (mListSelected != null && !mListSelected.isEmpty()) {
 					int workPT = 0;
 					List<Float> l;
@@ -432,9 +463,9 @@ public class ServiceReader extends Service {
 					p.put(C.workBefore, p.get(C.work));
 			
 			reader.close();
-			
+
 			if (recording)
-				record();
+				record(tensorflow, tensorflow_RNN);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -451,13 +482,171 @@ public class ServiceReader extends Service {
 			return 0;
 		else return percentage;
 	}
-	
-	
-	
-	
-	
+
+
+	private float[] gettensorflowinput(ArrayList<Float> myIntegers){
+
+		float cpu_std = 3.962832f;
+		float cpuam_std = 0.565675f;
+		float memoryam_std = 0.000000f;
+		float memused_std = 22950.313937f;
+		float memavil_std = 22950.313937f;
+		float memfree_std = 16205.462286f;
+		float cached_std = 14519.936550f;
+		float threshold_std = 0.000000f;
+
+		float cpu_mean = 3.705264f;
+		float cpuam_mean = 2.260897f;
+		float memoryam_mean = 3.705264f;
+		float memused_mean = 771590.796872f;
+		float memavil_mean = 778957.203128f;
+		float memfree_mean = 343344.630335f;
+		float cached_mean = 435617.041246f;
+		float threshold_mean = 0.000000f;
+
+		float[] Input = new float[6];
+
+		Input[0]  =  (myIntegers.get(0) - cpu_mean)/cpu_std;
+		Input[2]  =  (myIntegers.get(3) - memused_mean)/memused_std;
+		Input[3]  =  (myIntegers.get(4) - memavil_mean)/memavil_std;
+		Input[4]  =  (myIntegers.get(5) - memfree_mean)/memfree_std;
+		Input[5]  =  (myIntegers.get(6) - cached_mean)/cached_std;
+		Input[1]  =  (myIntegers.get(1) - cpuam_mean)/cpuam_std;
+
+
+
+		return Input;
+	}
+
+
+	public float[] mean_std(List<Float> x) {
+		int m=x.size();
+		float sum=0;
+		for(int i=0;i<m;i++){//求和
+			sum+=x.get(i);
+		}
+		float dAve=sum/m;//求平均值
+		float dVar=0;
+		for(int i=0;i<m;i++){//求方差
+			dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
+		}
+		float[] std_mean = new float[2];
+		std_mean[0] = dAve;
+		std_mean[1] = (float) Math.sqrt(dVar/m);
+		return std_mean;
+	}
+
+	public float[] mean_std_int(List<Integer> x) {
+		int m=x.size();
+		float sum=0;
+		for(int i=0;i<m;i++){//求和
+			sum+=x.get(i);
+		}
+		float dAve=sum/m;//求平均值
+		float dVar=0;
+		for(int i=0;i<m;i++){//求方差
+			dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
+		}
+		float[] std_mean = new float[2];
+		std_mean[0] = dAve;
+		std_mean[1] = (float) Math.sqrt(dVar/m);
+		return std_mean;
+	}
+
+	public float[] mean_std_str(List<String> x) {
+		int m=x.size();
+		float sum=0;
+		for(int i=0;i<m;i++){//求和
+
+			sum+=Float.parseFloat(x.get(i));
+		}
+		float dAve=sum/m;//求平均值
+		float dVar=0;
+		for(int i=0;i<m;i++){//求方差
+			dVar+=(Float.parseFloat(x.get(i))-dAve)*(Float.parseFloat(x.get(i))-dAve);
+		}
+		float[] std_mean = new float[2];
+		std_mean[0] = dAve;
+		std_mean[1] = (float) Math.sqrt(dVar/m);
+		return std_mean;
+	}
+
+	private float[] std(ArrayList<Float> myIntegers){
+
+		float cpu_std = 3.962832f;
+		float cpuam_std = 0.565675f;
+		float memoryam_std = 0.000000f;
+		float memused_std = 22950.313937f;
+		float memavil_std = 22950.313937f;
+		float memfree_std = 16205.462286f;
+		float cached_std = 14519.936550f;
+		float threshold_std = 0.000000f;
+
+		float cpu_mean = 3.705264f;
+		float cpuam_mean = 2.260897f;
+		float memoryam_mean = 3.705264f;
+		float memused_mean = 771590.796872f;
+		float memavil_mean = 778957.203128f;
+		float memfree_mean = 343344.630335f;
+		float cached_mean = 435617.041246f;
+		float threshold_mean = 0.000000f;
+
+		float[] Input = new float[6];
+
+		Input[0]  =  (myIntegers.get(0) - cpu_mean)/cpu_std;
+		Input[2]  =  (myIntegers.get(3) - memused_mean)/memused_std;
+		Input[3]  =  (myIntegers.get(4) - memavil_mean)/memavil_std;
+		Input[4]  =  (myIntegers.get(5) - memfree_mean)/memfree_std;
+		Input[5]  =  (myIntegers.get(6) - cached_mean)/cached_std;
+		Input[1]  =  (myIntegers.get(1) - cpuam_mean)/cpuam_std;
+
+
+
+		return Input;
+	}
+
+	private float distance(float[] input, float[] output){
+		float dis = 0;
+		for(int i =1; i<6;i++){
+			dis += (input[i] - output[i])*(input[i] - output[i])*(input[i] - output[i]);
+		}
+		return dis;
+	}
+
+
+	private float[] distance_list(float[] input, float[] output){
+		float[] dis = new float[7];
+		dis[0] = 0;
+		for(int i =1; i<6;i++){
+			float temp = (input[i] - output[i])*(input[i] - output[i])*(input[i] - output[i]);
+			dis[i] = temp;
+			dis[0] += temp;
+		}
+		return dis;
+	}
+
+	private int max(float[] list){
+		int max_temp = 1;
+		for(int i = 1;i < list.length;i++){
+			if(list[i] > list[max_temp]){
+				max_temp = i;
+			}
+		}
+		return max_temp-1;
+	}
+
+	private float abs(float input){
+		if(input<0){
+			return -input;
+		}
+		else{
+			return input;
+		}
+	}
+
+
 	@SuppressWarnings("unchecked")
-	private void record() {
+	private void record(TensorFlowInferenceInterface tensorflow, TensorFlowInferenceInterface tensorflow_RNN) {
 		if (mW == null) {
 			File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/SeraphimDroid");
 			dir.mkdirs();
@@ -482,22 +671,31 @@ public class ServiceReader extends Service {
 						.append(",MemTotal (kB),")
 						.append(memTotal)
 						.append("\nTotal CPU usage (%),SeraphimDroid (Pid ").append(Process.myPid()).append(") CPU usage (%),SeraphimDroid Memory (kB)");
+				// can change here to get a constance column name
 				if (mListSelected != null && !mListSelected.isEmpty())
 					for (Map<String, Object> p : mListSelected)
 						sb.append(",").append(p.get(C.pAppName)).append(" (Pid ").append(p.get(C.pId)).append(") CPU usage (%)")
 						  .append(",").append(p.get(C.pAppName)).append(" Memory (kB)");
 				
-				sb.append(",,Memory used (kB),Memory available (MemFree+Cached) (kB),MemFree (kB),Cached (kB),Threshold (kB)");
+				sb.append(",,Memory used (kB),Memory available (MemFree+Cached) (kB),MemFree (kB),Cached (kB),Threshold (kB), dis_auto, dis_RNN");
 				
 				mW.write(sb.toString());
 				mNM.notify(10, mNotificationRecord);
 				topRow = false;
 			}
-			
-			StringBuilder sb = new StringBuilder()
-					.append("\n").append(cpuTotal.get(0))
-					.append(",").append(cpuAM.get(0))
-					.append(",").append(memoryAM.get(0));
+			// Junfan
+			StringBuilder sb = new StringBuilder();
+			try{
+				sb.append("\n").append(cpuTotal.get(0))
+						.append(",").append(cpuAM.get(0))
+						.append(",").append(memoryAM.get(0));
+			}catch (Throwable t){
+				// if cpuTotal didn't exit
+				sb.append("\n").append(0)
+						.append(",").append(0)
+						.append(",").append(memoryAM.get(0));
+			}
+
 			if (mListSelected != null && !mListSelected.isEmpty())
 				for (Map<String, Object> p : mListSelected) {
 					if (p.get(C.pDead) != null)
@@ -505,14 +703,283 @@ public class ServiceReader extends Service {
 					else sb.append(",").append(((List<Integer>) p.get(C.pFinalValue)).get(0))
 							.append(",").append(((List<Integer>) p.get(C.pTPD)).get(0));
 				}
+//			try{
 			sb.append(",")
 					.append(",").append(memUsed.get(0))
 					.append(",").append(memAvailable.get(0))
 					.append(",").append(memFree.get(0))
 					.append(",").append(cached.get(0))
-					.append(",").append(threshold.get(0));
-			
+					.append(",").append(threshold.get(0))
+					.append(",").append(dis_auto.get(0))
+					.append(",").append(dis_RNN.get(0));
+//			catch (Throwable t){
+//				sb.append(",")
+//						.append(",").append(memUsed.get(0))
+//						.append(",").append(memAvailable.get(0))
+//						.append(",").append(memFree.get(0))
+//						.append(",").append(cached.get(0))
+//						.append(",").append(threshold.get(0))
+//						.append(",").append(0)
+//						.append(",").append(0);
+//			}
+//			System.out.print(memUsed.get(0));
+//			System.out.print(memAvailable.get(0));
 			mW.write(sb.toString());
+//			System.out.print(sb.toString());
+
+			String mynumbers = sb.toString();
+			String[] stringFlats = mynumbers.split(",");
+			ArrayList<Float> myIntegers = new ArrayList<Float>();
+
+			for(int i=0;i<stringFlats.length;i++){
+				try {
+					myIntegers.add(Float.parseFloat(stringFlats[i]));
+				} catch(Exception e){
+
+				}
+			}
+			// cpuTotal cpuAM memoryAM memUsed memAvailable memFree cached threshold
+//			System.out.print("cpu:");
+//			System.out.println(cpuTotal.get(0));
+		//	Input = gettensorflowinput(myIntegers);
+
+// Get the Input as the input of tensorflow model (autoencoder model)
+//			try{
+//				new RunStats();
+//				System.out.print("TensorFlow native methods already loaded");
+//			}
+//			catch(Exception e){
+//				String MODEL_FILE = "file:///android_asset/model2.pb";  //模型存放路径
+//				TensorFlowInferenceInterface tensorflow = new TensorFlowInferenceInterface(getAssets(), MODEL_FILE);
+//
+//			}
+//			Global.tensorflow;
+//			TensorFlowInferenceInterface tensorflow = Global();
+////			Iterator<Operation> operationIterator = tensorflow.graph().operations();
+//			while (operationIterator.hasNext()){
+//				Operation operation = operationIterator.next();
+//				System.out.print(operation.name());
+//			}
+//
+//			float cpu_std = 3.962832f;
+//			float cpuam_std = 0.565675f;
+//			float memoryam_std = 0.000000f;
+//			float memused_std = 22950.313937f;
+//			float memavil_std = 22950.313937f;
+//			float memfree_std = 16205.462286f;
+//			float cached_std = 14519.936550f;
+//			float threshold_std = 0.000000f;
+//
+//			float cpu_mean = 3.705264f;
+//			float cpuam_mean = 2.260897f;
+//			float memoryam_mean = 3.705264f;
+//			float memused_mean = 771590.796872f;
+//			float memavil_mean = 778957.203128f;
+//			float memfree_mean = 343344.630335f;
+//			float cached_mean = 435617.041246f;
+//			float threshold_mean = 0.000000f;
+//
+			System.out.println(memoryAM.size());
+			float cpu_std = mean_std(cpuTotal)[1];
+			float cpuam_std = mean_std(cpuAM)[1];
+			float memoryam_std = mean_std_int(memoryAM)[1];
+			float memused_std = mean_std_str(memUsed)[1];
+			float memavil_std = mean_std_str(memAvailable)[1];
+			float memfree_std = mean_std_str(memFree)[1];
+			float cached_std = mean_std_str(cached)[1];
+
+			float cpu_mean = mean_std(cpuTotal)[0];
+			float cpuam_mean = mean_std(cpuAM)[0];
+			float memoryam_mean = mean_std_int(memoryAM)[0];
+			float memused_mean = mean_std_str(memUsed)[0];
+			float memavil_mean = mean_std_str(memAvailable)[0];
+			float memfree_mean = mean_std_str(memFree)[0];
+			float cached_mean = mean_std_str(cached)[0];
+
+			float[] Input = new float[6];
+
+			try {
+				Input[0] = (cpuTotal.get(0) - cpu_mean) / cpu_std;
+				Input[5] = (cpuAM.get(0) - cpuam_mean) / cpuam_std;
+			}
+			catch (Throwable t){
+				Input[0] = 0;
+				Input[5] = 0;
+			}
+			Input[1]  =  (Float.parseFloat(memUsed.get(0)) - memused_mean)/memused_std;
+			Input[2]  =  (Float.parseFloat(memAvailable.get(0)) - memavil_mean)/memavil_std;
+			Input[3]  =  (Float.parseFloat(memFree.get(0)) - memfree_mean)/memfree_std;
+			Input[4]  =  (Float.parseFloat(cached.get(0)) - cached_mean)/cached_std;
+
+
+//			try {
+//				Input[0]  =  (cpuTotal.get(0) - 9.884599f)/6.367253f;
+//				Input[5]  =  (cpuAM.get(0) - 0.697867f)/ 1.119867f;
+//
+//			}
+//			catch (Throwable t){
+//				Input[0] = 0;
+//				Input[5] = 0;
+////				cpuTotal.add(0f);
+////				cpuAM.add(0f);
+//			}
+//
+//			Input[1]  =  (Float.parseFloat(memUsed.get(0)) - 81390.244549f)/690447.355969f;
+//			Input[2]  =  (Float.parseFloat(memAvailable.get(0)) - 81390.244549f)/860100.644031f;
+//			Input[3]  =  (Float.parseFloat(memFree.get(0)) - 339839.719606f)/19581.212519f;
+//			Input[4]  =  (Float.parseFloat(cached.get(0)) - 75832.214062f)/520277.660460f;
+
+
+//			System.out.println(Input_20.size());
+//
+//			Iterator<Operation> operationIterator = tensorflow_RNN.graph().operations();
+//			while (operationIterator.hasNext()){
+//				Operation operation = operationIterator.next();
+//				System.out.print(" ");
+//				System.out.print(operation.name());
+//			}
+			float RNN_dis = 0;
+			float[] Output_RNN = new float[6];
+			for(int i=0;i<6;i++) {Output_RNN[i]=0;}
+			if (Input_20.size() > 20*6) {
+//				Input_20.remove(memUsed.size() - 5);
+				float[] Input_RNN = new float[6*20];
+				for(int i=0;i<6*20;i++){
+					Input_RNN[i] = Input_20.get(i);
+				}
+
+				tensorflow_RNN.feed("input",Input_RNN,20,6);
+				String outputNode = "output/bias";
+				String[] outputNodes = {outputNode};
+
+				boolean enableStats = false;
+				tensorflow_RNN.run(outputNodes, enableStats);
+				tensorflow_RNN.fetch(outputNode, Output_RNN); // output is a preallocated float[] in the size of the expected output vector
+				System.out.print("The RNN distance is: ");
+				System.out.println(distance(Input,Output_RNN));
+
+				RNN_dis = distance_list(Input,Output_RNN)[0];
+
+			}
+
+			for(int i = 0;i<6; i++){
+				Input_20.add(Input[i]);
+			}
+
+			tensorflow.feed("input",Input,1,6);
+
+//			public long getTotal();
+
+			String outputNode = "output/Relu";
+			String[] outputNodes = {outputNode};
+			float[] Output = new float[6];
+			boolean enableStats = false;
+			tensorflow.run(outputNodes, enableStats);
+			tensorflow.fetch(outputNode, Output); // output is a preallocated float[] in the size of the expected output vector
+
+//			System.out.print(cpuTotal.get(0));
+//			System.out.print(Float.parseFloat(memUsed.get(0)));
+//			System.out.print(Float.parseFloat(memAvailable.get(0)));
+//			System.out.print(Float.parseFloat(memFree.get(0)));
+//			System.out.print(Float.parseFloat(cached.get(0)));
+//			System.out.print(cpuAM.get(0));
+////
+//			for(int i =0;i<6;i++){
+//				System.out.print("input:");
+//				System.out.println(Input[i]);
+//			}
+//
+//			for(int i =0;i<6;i++){
+//				System.out.print("Output:");
+//				System.out.println(Output[i]);
+//			}
+
+			System.out.print("The autoencoder distance is: ");
+			System.out.println(distance(Input,Output));
+//
+//			if(memUsed.size()==21){
+//
+//				System.out.println("memtest");
+//				for(int i =0;i<=20;i++){
+//                    System.out.println(" ");
+//					System.out.println(Float.parseFloat(memUsed.get(i)));
+//				}
+//
+//			}
+//			System.out.println("If the distance is large than our threshold, warning!!:");
+			float dis = distance_list(Input,Output)[0];
+			dis_auto.add(0,dis);
+			dis_RNN.add(0,RNN_dis);
+
+			System.out.println(dis_RNN.get(0));
+			System.out.println(dis_RNN.size());
+
+//			float InverseGamma_alpha = 3;
+//			float InverseGamma_beta = 0.5f;
+//			for(int i = 0; i <=dis_auto.size();i++){
+//				InverseGamma_beta += 1/dis_auto.get(i);
+//			}
+
+			//math.Gamma.regularizedGammaQ(dis_auto.size()*InverseGamma_alpha,InverseGamma_beta/dis);
+
+
+			if(abs(dis)>50||abs(RNN_dis)>50||(abs(dis)>30&&abs(RNN_dis)>30)){
+				int dis_auto_anomaly = max(distance_list(Input,Output));
+				int dis_RNN_anomaly = max(distance_list(Input,Output_RNN));
+				String message = "The anomaly is from: ";
+				switch(dis_auto_anomaly) {
+					case 0:
+//						String message = "The anomaly is from: " + Integer.toString(dis_auto_anomaly) + Integer.toString(dis_RNN_anomaly);
+						message = "The anomaly is from: CPU";
+						break;
+					case 1:
+						message = "The anomaly is from: memUsed";
+						break;
+					case 2:
+						message = "The anomaly is from: memAvailable";
+						break;
+					case 3:
+						message = "The anomaly is from: memFree";
+						break;
+					case 4:
+						message = "The anomaly is from: cached";
+						break;
+					case 5:
+						message = "The anomaly is from: us";
+						break;
+					default:
+						break;
+				}
+
+
+				Intent activityIntent = new Intent(this, ServiceReader.class);
+				PendingIntent contentIntent = (PendingIntent) PendingIntent.getActivities(this,
+						0, new Intent[]{activityIntent},0);
+
+				Intent broadcastIntent = new Intent(this,NotificationReceiver.class);
+				broadcastIntent.putExtra("toastMessage",message);
+				PendingIntent actionIntent = PendingIntent.getBroadcast(this,
+						0,broadcastIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+				NotificationManagerCompat notificationManager;
+
+				notificationManager = NotificationManagerCompat.from(getApplicationContext());
+
+				Notification notification = new NotificationCompat.Builder(this)
+						.setContentTitle("Warning")
+						.setContentText("Anomaly detected!!")
+						.setSmallIcon(R.drawable.icon_recording)
+						.setDefaults(Notification.DEFAULT_ALL)
+						.setPriority(Notification.PRIORITY_HIGH)
+						.setContentIntent(contentIntent)
+						.setAutoCancel(true)
+						.addAction(R.drawable.icon_recording,"More Info",actionIntent)
+						.build();
+
+				notificationManager.notify(null, 0, notification);
+
+			}
+
 		} catch (IOException e) {
 			notifyError(e);
 		}
@@ -543,7 +1010,7 @@ public class ServiceReader extends Service {
 //			MediaScannerConnection.scanFile(this, new String[] { mFile.getAbsolutePath() }, null, null);
 			// http://stackoverflow.com/questions/5739140/mediascannerconnection-produces-android-app-serviceconnectionleaked
 			sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).setData(Uri.fromFile(mFile)));
-			
+
 			Toast.makeText(this, new StringBuilder().append(getString(R.string.app_name)).append("Record-").append(getDate()).append(".csv ")
 					.append(getString(R.string.notify_toast_saved))
 					.append(" " + Environment.getExternalStorageDirectory().getAbsolutePath() + "/Seraphimdroid"), Toast.LENGTH_LONG).show();

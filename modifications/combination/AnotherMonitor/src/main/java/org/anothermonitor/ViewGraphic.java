@@ -9,6 +9,7 @@
 
 package org.anothermonitor;
 
+import java.io.IOError;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -271,11 +272,13 @@ public class ViewGraphic extends TextureView {
 			for(int m=0; m < (y.size()-1) && m < intervalTotalNumber; ++m) {
 				if (mThread.isInterrupted())
 					return;
-				canvas.drawLine(xRight - mSR.getIntervalWidth()*m,
-						yBottom - Integer.parseInt(y.get(m))*graphicHeight/memTotal,
-						xRight - mSR.getIntervalWidth()*m - mSR.getIntervalWidth(),
-						yBottom - Integer.parseInt(y.get(m+1))*graphicHeight/memTotal,
-						paint);
+				try {
+					canvas.drawLine(xRight - mSR.getIntervalWidth() * m,
+							yBottom - Integer.parseInt(y.get(m)) * graphicHeight / memTotal,
+							xRight - mSR.getIntervalWidth() * m - mSR.getIntervalWidth(),
+							yBottom - Integer.parseInt(y.get(m + 1)) * graphicHeight / memTotal,
+							paint);
+				}catch (Throwable t){}
 			}
 	}
 	

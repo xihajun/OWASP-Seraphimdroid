@@ -52,6 +52,13 @@ limitations under the License.
             <intent android:action="ca.rmen.android.networkmonitor.app.log.LogActivity" />
         </Preference>
         <Preference
+            android:icon="@drawable/ic_pref_show_log"
+            android:key="PREF_SHOW_MODEL"
+            android:title="@string/pref_title_model"
+            android:theme="@style/Theme.AppCompat">
+            <intent android:action="ca.rmen.android.networkmonitor.app.log.Model" />
+        </Preference>
+        <Preference
             android:icon="@drawable/ic_pref_share"
             android:key="PREF_SHARE"
             android:title="@string/action_share" >

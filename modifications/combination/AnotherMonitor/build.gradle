@@ -15,6 +15,7 @@ repositories {
     }
 }
 
+
 android {
     compileSdkVersion 25
 
@@ -24,6 +25,12 @@ android {
         targetSdkVersion 26
         versionCode 9
         versionName "3.1.0"
+        sourceSets {
+            main {
+                jniLibs.srcDirs = ['libs']
+            }
+        }
+
     }
 
     compileOptions {
@@ -42,4 +49,8 @@ dependencies {
     api 'androidx.core:core:1.0.0'
     api 'androidx.appcompat:appcompat:1.0.0'
     api 'com.jaredrummler:android-processes:1.0.9'
+
+    implementation 'org.tensorflow:tensorflow-android:1.13.1'
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+
 }

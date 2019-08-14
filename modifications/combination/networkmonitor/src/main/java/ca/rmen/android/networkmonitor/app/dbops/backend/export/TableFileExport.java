@@ -96,6 +96,9 @@ abstract class TableFileExport extends FileExport {
         if (recordCount > 0)
             uri = uri.buildUpon().appendQueryParameter(NetMonProvider.QUERY_PARAMETER_LIMIT, String.valueOf(recordCount)).build();
         Log.v(TAG, "I am here " );
+
+        // Junfan
+        // query a dataset
         Cursor c = mContext.getContentResolver().query(uri, usedColumnNames, selection.selectionString, selection.selectionArgs,
                 sortPreferences.getOrderByClause());
         Log.v(TAG, "I wish i will be here " );
