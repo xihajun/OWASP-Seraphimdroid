@@ -58,11 +58,18 @@ Autoencoder is a special neural network that encodes the real data into a small 
 (Figure: Autoencoder architechture)
 Similarly, our LSTM methods is based on previous M timelines data to predict the M+1 data. By calculating the distance between prediction and real data and comparing with threshold, it could detect the anomaly.
 
-# Malware Testing
-
-In our 
-
 # Future work & other effort
 
 For malware classification part, I still explored other machine learning techniques, like CNN, Random Forest, SVM, etc. It could performs well for our naive labelling (when malware runs, say it is abnormal). However, since we don’t have the source code of malware, it is impossible to know when the malicious behavior happen exactly. It worth to say that our model for predicting if the user plays youtube videos perform quite well, which shows that if we label correctly our model could learn better. So the future work could be find a proper way to label the collected data. Once we did that, I believe it could detect the anomaly more precisely. 
+
+# Malware Testing
+
+During the data collecting period, I have tested 10 different malware as well as 10 benign which can be found here. By labelling the whole period as malware running period and benign running period, our random forest is able to classify the malicious data out with max 99.69% accuracy and 91% F1 score. (details: pre1, pre2, pre3) In the future, the improvement should be focus on fixing labelling issue. Luckily, in our implementation, it could be detected precisely for SMS malware which sends message out and could be seen in the user interface.
+
+# Where can you find the code?
+Our code can be found in these two github repos:
+  - Main repo
+  - Private repo
+
+
 
