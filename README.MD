@@ -1,7 +1,7 @@
-# Project summary for GSoC 2019
-Project name: OWASP Seraphimdroid 
+# [Project summary](https://docs.google.com/document/d/1WzNZed2Et8eRn7xLYvWI_Wb-FUqpKK88eBp7XNqt20I/edit?usp=sharing) for GSoC 2019 
+**Project name**: OWASP Seraphimdroid 
 
-Mentor: Nikola Milosevic (nikola.milosevic@owasp.org)
+**Mentor**: Nikola Milosevic (nikola.milosevic@owasp.org)
 
 
 # Project Description
@@ -68,8 +68,8 @@ During the data collecting period, I have tested 10 different malware as well as
 
 # Where can you find the code?
 Our code can be found in these two github repos:
-  - Main repo
-  - Private repo
+  - [Main repo](https://github.com/nikolamilosevic86/owasp-seraphimdroid/tree/GSoC-2019)
+  - [Private repo](https://github.com/xihajun/OWASP-Seraphimdroid)
 
 
 
