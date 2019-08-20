@@ -1,1 +1,0 @@
-include ':app', ':lucenedroid', ':AnotherMonitor', ':AnotherMonitor-debug', ':coach'
