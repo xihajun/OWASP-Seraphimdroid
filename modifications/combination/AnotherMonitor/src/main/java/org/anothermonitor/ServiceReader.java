@@ -609,7 +609,7 @@ public class ServiceReader extends Service {
 
 	private float distance(float[] input, float[] output){
 		float dis = 0;
-		for(int i =1; i<6;i++){
+		for(int i =0; i<6;i++){
 			dis += (input[i] - output[i])*(input[i] - output[i]);
 		}
 		return dis;
@@ -619,8 +619,8 @@ public class ServiceReader extends Service {
 	private float[] distance_list(float[] input, float[] output){
 		float[] dis = new float[7];
 		dis[0] = 0;
-		for(int i =1; i<6;i++){
-			float temp = (input[i] - output[i])*(input[i] - output[i])*(input[i] - output[i]);
+		for(int i =1; i<=6;i++){
+			float temp = (input[i-1] - output[i-1])*(input[i-1] - output[i-1]);
 			dis[i] = temp;
 			dis[0] += temp;
 		}
@@ -796,7 +796,6 @@ public class ServiceReader extends Service {
 				System.out.println(distance(Input,Output_RNN));
 
 				RNN_dis = distance_list(Input,Output_RNN)[0];
-
 			}
 
 			// add new data to Input_20
@@ -833,7 +832,7 @@ public class ServiceReader extends Service {
 //			System.out.println("suriv");
 //			System.out.println(Output1);
 
-			if(abs(dis)>50||abs(RNN_dis)>50){
+			if(abs(dis)>50||abs(RNN_dis)>50||(abs(dis)+abs(RNN_dis)>70)){
 				int dis_auto_anomaly = max(distance_list(Input,Output));
 				int dis_RNN_anomaly = max(distance_list(Input,Output_RNN));
 				String message = "The anomaly is from: ";
@@ -862,9 +861,14 @@ public class ServiceReader extends Service {
 				}
 
 
-				Intent activityIntent = new Intent(this, ServiceReader.class);
-				PendingIntent contentIntent = (PendingIntent) PendingIntent.getActivities(this,
-						0, new Intent[]{activityIntent},0);
+//				Intent activityIntent = new Intent(this, ServiceReader.class);
+//				PendingIntent contentIntent = (PendingIntent) PendingIntent.getActivities(this,
+//						0, new Intent[]{activityIntent},0);
+				PendingIntent contentIntent =  TaskStackBuilder.create(this)
+//				.addParentStack(ActivityMain.class)
+//				.addNextIntent(new Intent(this, ActivityMain.class))
+						.addNextIntentWithParentStack(new Intent(this, ActivityMain.class))
+						.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
 				Intent broadcastIntent = new Intent(this,NotificationReceiver.class);
 				broadcastIntent.putExtra("toastMessage",message);
@@ -882,7 +886,6 @@ public class ServiceReader extends Service {
 						.setDefaults(Notification.DEFAULT_ALL)
 						.setPriority(Notification.PRIORITY_HIGH)
 						.setContentIntent(contentIntent)
-						.setOnlyAlertOnce(true)
 						.setAutoCancel(true)
 						.addAction(R.drawable.icon_recording,"More Info",actionIntent)
 						.build();
