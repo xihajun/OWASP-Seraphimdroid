@@ -51,6 +51,7 @@ import androidx.core.app.NotificationManagerCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+// math and model import
 import org.apache.commons.math3.distribution.*;
 import org.apache.commons.math3.special.Gamma;
 import org.tensorflow.Operation;
@@ -572,6 +573,7 @@ public class ServiceReader extends Service {
 		return std_mean;
 	}
 
+
 	private float[] std(ArrayList<Float> myIntegers){
 
 		float cpu_std = 3.962832f;
@@ -600,7 +602,6 @@ public class ServiceReader extends Service {
 		Input[4]  =  (myIntegers.get(5) - memfree_mean)/memfree_std;
 		Input[5]  =  (myIntegers.get(6) - cached_mean)/cached_std;
 		Input[1]  =  (myIntegers.get(1) - cpuam_mean)/cpuam_std;
-
 
 
 		return Input;
@@ -645,6 +646,7 @@ public class ServiceReader extends Service {
 		}
 	}
 
+	// InverseGamma as likelihood for update the gamma distrib parameters
 	private double InverseGamma_beta(List<Float> list){
 		double beta = 0.5;
 		for(int i=0;i<list.size();i++){
@@ -654,22 +656,6 @@ public class ServiceReader extends Service {
 		}
 		return beta;
 	}
-
-//	private double mean(List<Float> list){
-//		double beta = 0;
-//		for(int i=0;i<list.size();i++){
-//			beta+=list.get(i);
-//		}
-//		return beta/list.size();
-//	}
-//
-//	private double variance(List<Float> data,double mean){
-//		double variance=0;
-//		for (int i = 0; i < data.size(); i++) {
-//			variance += (data.get(i) - mean) * (data.get(i) - mean);
-//		}
-//		return variance/data.size();
-//	}
 
 	@SuppressWarnings("unchecked")
 	private void record(TensorFlowInferenceInterface tensorflow, TensorFlowInferenceInterface tensorflow_RNN) {
@@ -709,7 +695,7 @@ public class ServiceReader extends Service {
 				mNM.notify(10, mNotificationRecord);
 				topRow = false;
 			}
-			// Junfan
+			// New change
 			StringBuilder sb = new StringBuilder();
 			try{
 				sb.append("\n").append(cpuTotal.get(0))
@@ -729,7 +715,7 @@ public class ServiceReader extends Service {
 					else sb.append(",").append(((List<Integer>) p.get(C.pFinalValue)).get(0))
 							.append(",").append(((List<Integer>) p.get(C.pTPD)).get(0));
 				}
-//			try{
+
 			sb.append(",")
 					.append(",").append(memUsed.get(0))
 					.append(",").append(memAvailable.get(0))
@@ -738,20 +724,9 @@ public class ServiceReader extends Service {
 					.append(",").append(threshold.get(0))
 					.append(",").append(dis_auto.get(0))
 					.append(",").append(dis_RNN.get(0));
-//			catch (Throwable t){
-//				sb.append(",")
-//						.append(",").append(memUsed.get(0))
-//						.append(",").append(memAvailable.get(0))
-//						.append(",").append(memFree.get(0))
-//						.append(",").append(cached.get(0))
-//						.append(",").append(threshold.get(0))
-//						.append(",").append(0)
-//						.append(",").append(0);
-//			}
-//			System.out.print(memUsed.get(0));
-//			System.out.print(memAvailable.get(0));
+
 			mW.write(sb.toString());
-//			System.out.print(sb.toString());
+// 			change the output which could be analysed more in the future
 
 			String mynumbers = sb.toString();
 			String[] stringFlats = mynumbers.split(",");
@@ -764,48 +739,10 @@ public class ServiceReader extends Service {
 
 				}
 			}
-			// cpuTotal cpuAM memoryAM memUsed memAvailable memFree cached threshold
-//			System.out.print("cpu:");
-//			System.out.println(cpuTotal.get(0));
-		//	Input = gettensorflowinput(myIntegers);
 
-// Get the Input as the input of tensorflow model (autoencoder model)
-//			try{
-//				new RunStats();
-//				System.out.print("TensorFlow native methods already loaded");
-//			}
-//			catch(Exception e){
-//				String MODEL_FILE = "file:///android_asset/model2.pb";  //模型存放路径
-//				TensorFlowInferenceInterface tensorflow = new TensorFlowInferenceInterface(getAssets(), MODEL_FILE);
-//
-//			}
-//			Global.tensorflow;
-//			TensorFlowInferenceInterface tensorflow = Global();
-////			Iterator<Operation> operationIterator = tensorflow.graph().operations();
-//			while (operationIterator.hasNext()){
-//				Operation operation = operationIterator.next();
-//				System.out.print(operation.name());
-//			}
-//
-//			float cpu_std = 3.962832f;
-//			float cpuam_std = 0.565675f;
-//			float memoryam_std = 0.000000f;
-//			float memused_std = 22950.313937f;
-//			float memavil_std = 22950.313937f;
-//			float memfree_std = 16205.462286f;
-//			float cached_std = 14519.936550f;
-//			float threshold_std = 0.000000f;
-//
-//			float cpu_mean = 3.705264f;
-//			float cpuam_mean = 2.260897f;
-//			float memoryam_mean = 3.705264f;
-//			float memused_mean = 771590.796872f;
-//			float memavil_mean = 778957.203128f;
-//			float memfree_mean = 343344.630335f;
-//			float cached_mean = 435617.041246f;
-//			float threshold_mean = 0.000000f;
-//
+			// check the list size
 			System.out.println(memoryAM.size());
+			// calculate the std and mean to scale data
 			float cpu_std = mean_std(cpuTotal)[1];
 			float cpuam_std = mean_std(cpuAM)[1];
 			float memoryam_std = mean_std_int(memoryAM)[1];
@@ -822,6 +759,7 @@ public class ServiceReader extends Service {
 			float memfree_mean = mean_std_str(memFree)[0];
 			float cached_mean = mean_std_str(cached)[0];
 
+			// Calculate the Autoencoder input
 			float[] Input = new float[6];
 
 			try {
@@ -837,38 +775,11 @@ public class ServiceReader extends Service {
 			Input[3]  =  (Float.parseFloat(memFree.get(0)) - memfree_mean)/memfree_std;
 			Input[4]  =  (Float.parseFloat(cached.get(0)) - cached_mean)/cached_std;
 
-
-//			try {
-//				Input[0]  =  (cpuTotal.get(0) - 9.884599f)/6.367253f;
-//				Input[5]  =  (cpuAM.get(0) - 0.697867f)/ 1.119867f;
-//
-//			}
-//			catch (Throwable t){
-//				Input[0] = 0;
-//				Input[5] = 0;
-////				cpuTotal.add(0f);
-////				cpuAM.add(0f);
-//			}
-//
-//			Input[1]  =  (Float.parseFloat(memUsed.get(0)) - 81390.244549f)/690447.355969f;
-//			Input[2]  =  (Float.parseFloat(memAvailable.get(0)) - 81390.244549f)/860100.644031f;
-//			Input[3]  =  (Float.parseFloat(memFree.get(0)) - 339839.719606f)/19581.212519f;
-//			Input[4]  =  (Float.parseFloat(cached.get(0)) - 75832.214062f)/520277.660460f;
-
-
-//			System.out.println(Input_20.size());
-//
-//			Iterator<Operation> operationIterator = tensorflow_RNN.graph().operations();
-//			while (operationIterator.hasNext()){
-//				Operation operation = operationIterator.next();
-//				System.out.print(" ");
-//				System.out.print(operation.name());
-//			}
+			// Input_20 is for RNN input
 			float RNN_dis = 0;
 			float[] Output_RNN = new float[6];
 			for(int i=0;i<6;i++) {Output_RNN[i]=0;}
 			if (Input_20.size() > 20*6) {
-//				Input_20.remove(memUsed.size() - 5);
 				float[] Input_RNN = new float[6*20];
 				for(int i=0;i<6*20;i++){
 					Input_RNN[i] = Input_20.get(i);
@@ -888,14 +799,13 @@ public class ServiceReader extends Service {
 
 			}
 
+			// add new data to Input_20
 			for(int i = 0;i<6; i++){
 				Input_20.add(Input[i]);
 			}
 
-
 			tensorflow.feed("input",Input,1,6);
 
-//			public long getTotal();
 
 			String outputNode = "output/Relu";
 			String[] outputNodes = {outputNode};
@@ -907,28 +817,21 @@ public class ServiceReader extends Service {
 
 			System.out.print("The autoencoder distance is: ");
 			System.out.println(distance(Input,Output));
-//
-//			if(memUsed.size()==21){
-//
-//				System.out.println("memtest");
-//				for(int i =0;i<=20;i++){
-//                    System.out.println(" ");
-//					System.out.println(Float.parseFloat(memUsed.get(i)));
-//				}
-//
-//			}
-//			System.out.println("If the distance is large than our threshold, warning!!:");
+
+
 			float dis = distance(Input,Output);
 			dis_auto.add(0,dis);
 			dis_RNN.add(0,RNN_dis);
 
+// 			Gamma distribution simulation
 
-			double mean = mean_std(dis_auto)[0];
-			double var = mean_std(dis_auto)[1]*mean_std(dis_auto)[1];
-
-			GammaDistribution gammaDistribution = new GammaDistribution(mean/var*mean, mean/var);
-			double Output1 = 1 - gammaDistribution.cumulativeProbability(dis);
-
+//			double mean = mean_std(dis_auto)[0];
+//			double var = mean_std(dis_auto)[1]*mean_std(dis_auto)[1];
+//
+//			GammaDistribution gammaDistribution = new GammaDistribution(mean/var*mean, mean/var);
+//			double Output1 = 1 - gammaDistribution.cumulativeProbability(dis);
+//			System.out.println("suriv");
+//			System.out.println(Output1);
 
 			if(abs(dis)>50||abs(RNN_dis)>50){
 				int dis_auto_anomaly = max(distance_list(Input,Output));
@@ -936,7 +839,6 @@ public class ServiceReader extends Service {
 				String message = "The anomaly is from: ";
 				switch(dis_auto_anomaly) {
 					case 0:
-//						String message = "The anomaly is from: " + Integer.toString(dis_auto_anomaly) + Integer.toString(dis_RNN_anomaly);
 						message = "The anomaly is from: CPU";
 						break;
 					case 1:
@@ -955,6 +857,7 @@ public class ServiceReader extends Service {
 						message = "The anomaly is from: us";
 						break;
 					default:
+						message = "Unknown anomaly";
 						break;
 				}
 
@@ -979,6 +882,7 @@ public class ServiceReader extends Service {
 						.setDefaults(Notification.DEFAULT_ALL)
 						.setPriority(Notification.PRIORITY_HIGH)
 						.setContentIntent(contentIntent)
+						.setOnlyAlertOnce(true)
 						.setAutoCancel(true)
 						.addAction(R.drawable.icon_recording,"More Info",actionIntent)
 						.build();

@@ -247,12 +247,6 @@ public class MainActivity extends FragmentActivity {
 					getIntent().removeExtra("tags");
 					selectFragment(6);
 				}
-//				else if(position == 8){
-//					getIntent().removeExtra("tags");
-//					selectFragment(8);
-////					Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
-////					startActivity(intent);
-//				}
 				else{
 					selectFragment(position);
 				}
@@ -452,16 +446,16 @@ public static void setUnlocked(boolean unlocked) {
 				recordUsage(7);
 				fragment = new org.owasp.seraphimdroid.EducateFragment();
 				break;
-			// Junfan add cpu usage activity
+			// add cpu usage activity
 			case 7:
 				recordUsage(8);
 				Intent intent_cpu = new Intent(MainActivity.this, ActivityMain.class);
 				startActivity(intent_cpu);
-//				drawerList.setItemChecked(position, true);
-//				drawerList.setSelection(position);
-//				setTitle(itemNames[position]);
-//				drawerLayout.closeDrawer(drawerList);
-//				fragment = new org.owasp.seraphimdroid.Test();
+				drawerList.setItemChecked(position, true);
+				drawerList.setSelection(position);
+				setTitle(itemNames[position]);
+				drawerLayout.closeDrawer(drawerList);
+				fragment = new org.owasp.seraphimdroid.Test();
 				break;
 			case 8:
 				recordUsage(9);
@@ -472,7 +466,6 @@ public static void setUnlocked(boolean unlocked) {
 				setTitle(itemNames[position]);
 				drawerLayout.closeDrawer(drawerList);
 				break;
-			// Junfan
 			case 9: {
 				if (prevSupportFlag != null) {
 					FragmentManager fragMan = getSupportFragmentManager();
