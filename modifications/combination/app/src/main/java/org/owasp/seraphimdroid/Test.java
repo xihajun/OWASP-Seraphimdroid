@@ -1,11 +1,17 @@
 package org.owasp.seraphimdroid;
 
+import android.content.Intent;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
+
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import org.anothermonitor.ActivityMain;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -56,23 +62,21 @@ public class Test extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+//        if (getArguments() != null) {
+//            mParam1 = getArguments().getString(ARG_PARAM1);
+//            mParam2 = getArguments().getString(ARG_PARAM2);
+//        }
+
+        Intent intent_cpu = new Intent(getActivity(), ActivityMain.class);
+        startActivity(intent_cpu);
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_test, container, false);
-    }
+
+
 
     public void OpenActivity(View view){
 
     }
-
     private int getNumCores() {
         class CpuFilter implements FileFilter {
             @Override
@@ -101,6 +105,7 @@ public class Test extends Fragment {
     }
 
 
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -115,6 +120,7 @@ public class Test extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
 
 
 }

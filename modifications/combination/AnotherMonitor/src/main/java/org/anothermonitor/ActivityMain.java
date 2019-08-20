@@ -45,20 +45,27 @@ import android.os.*;
 import android.os.Process;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import android.util.Log;
 import android.view.*;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import androidx.fragment.app.FragmentActivity;
+
 
 public class ActivityMain extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
-	
+
 	private boolean cpuTotal, cpuAM,
 				memUsed, memAvailable, memFree, cached, threshold,
 				settingsShown, canvasLocked, orientationChanged;
@@ -239,19 +246,27 @@ public class ActivityMain extends Activity implements ActivityCompat.OnRequestPe
 			finish();
 		}
 	};
-	
-	
-	
-	
-	
+
+
 	@SuppressWarnings("deprecation")
 	@SuppressLint({ "InlinedApi", "NewApi", "InflateParams" })
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) {
+
+
 		super.onCreate(savedInstanceState);
 		startService(new Intent(this, ServiceReader.class));
 		setContentView(R.layout.activity_main_an);
-		
+		getActionBar().setTitle("CPU usage");
+//
+//		FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.drawer_row_layout); //Remember this is the FrameLayout area within your activity_main.xml
+//		getLayoutInflater().inflate(R.layout.activity_main_an, contentFrameLayout);
+
+//		LayoutInflater inflater = (LayoutInflater) this
+//				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//		View contentView = inflater.inflate(R.layout.activity_main_an, null, false);
+//		drawerLayout.addView(contentView, 0);
+
 		mPrefs = getSharedPreferences(getString(R.string.app_name) + C.prefs, MODE_PRIVATE);
 		intervalRead = mPrefs.getInt(C.intervalRead, C.defaultIntervalUpdate);
 		intervalUpdate = mPrefs.getInt(C.intervalUpdate, C.defaultIntervalUpdate);

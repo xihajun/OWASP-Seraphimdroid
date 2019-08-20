@@ -31,6 +31,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.drawerlayout.widget.DrawerLayout;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -246,12 +247,12 @@ public class MainActivity extends FragmentActivity {
 					getIntent().removeExtra("tags");
 					selectFragment(6);
 				}
-				else if(position == 8){
-					getIntent().removeExtra("tags");
-					selectFragment(8);
-//					Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
-//					startActivity(intent);
-				}
+//				else if(position == 8){
+//					getIntent().removeExtra("tags");
+//					selectFragment(8);
+////					Intent intent =  new Intent(MainActivity.this, org.anothermonitor.ActivityMain.class);
+////					startActivity(intent);
+//				}
 				else{
 					selectFragment(position);
 				}
@@ -453,28 +454,17 @@ public static void setUnlocked(boolean unlocked) {
 				break;
 			// Junfan add cpu usage activity
 			case 7:
-				// if the app is already in
-				int i = 0;
-				if(i !=0){
-
-					if (new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain") !=null){
-						Intent intent = new Intent();
-						intent.setComponent(new ComponentName("org.anothermonitor", "org.anothermonitor.ActivityMain"));
-						startActivity(intent);
-					}
-				}
-				else{
-
-					Intent intent_cpu = new Intent(MainActivity.this, ActivityMain.class);
-					startActivity(intent_cpu);
-					drawerList.setItemChecked(position, true);
-					drawerList.setSelection(position);
-					setTitle(itemNames[position]);
-					drawerLayout.closeDrawer(drawerList);
-				}
-
+				recordUsage(8);
+				Intent intent_cpu = new Intent(MainActivity.this, ActivityMain.class);
+				startActivity(intent_cpu);
+//				drawerList.setItemChecked(position, true);
+//				drawerList.setSelection(position);
+//				setTitle(itemNames[position]);
+//				drawerLayout.closeDrawer(drawerList);
+//				fragment = new org.owasp.seraphimdroid.Test();
 				break;
 			case 8:
+				recordUsage(9);
 				Intent intent_network = new Intent(MainActivity.this, ca.rmen.android.networkmonitor.app.main.MainActivity.class);
 				startActivity(intent_network);
 				drawerList.setItemChecked(position, true);

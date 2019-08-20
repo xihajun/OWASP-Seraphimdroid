@@ -51,7 +51,8 @@ import androidx.core.app.NotificationManagerCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-//import android.os;
+import org.apache.commons.math3.distribution.*;
+import org.apache.commons.math3.special.Gamma;
 import org.tensorflow.Operation;
 import org.tensorflow.contrib.android.RunStats;
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
@@ -144,11 +145,11 @@ public class ServiceReader extends Service {
 			stopSelf();
 		}
 	};
-	
-	
-	
-	
-	
+
+
+
+
+
 	class ServiceReaderDataBinder extends Binder {
 		ServiceReader getService() {
 			return ServiceReader.this;
@@ -608,7 +609,7 @@ public class ServiceReader extends Service {
 	private float distance(float[] input, float[] output){
 		float dis = 0;
 		for(int i =1; i<6;i++){
-			dis += (input[i] - output[i])*(input[i] - output[i])*(input[i] - output[i]);
+			dis += (input[i] - output[i])*(input[i] - output[i]);
 		}
 		return dis;
 	}
@@ -644,6 +645,31 @@ public class ServiceReader extends Service {
 		}
 	}
 
+	private double InverseGamma_beta(List<Float> list){
+		double beta = 0.5;
+		for(int i=0;i<list.size();i++){
+			if(list.get(i)>0){
+				beta+=1/list.get(i);
+			}
+		}
+		return beta;
+	}
+
+//	private double mean(List<Float> list){
+//		double beta = 0;
+//		for(int i=0;i<list.size();i++){
+//			beta+=list.get(i);
+//		}
+//		return beta/list.size();
+//	}
+//
+//	private double variance(List<Float> data,double mean){
+//		double variance=0;
+//		for (int i = 0; i < data.size(); i++) {
+//			variance += (data.get(i) - mean) * (data.get(i) - mean);
+//		}
+//		return variance/data.size();
+//	}
 
 	@SuppressWarnings("unchecked")
 	private void record(TensorFlowInferenceInterface tensorflow, TensorFlowInferenceInterface tensorflow_RNN) {
@@ -866,6 +892,7 @@ public class ServiceReader extends Service {
 				Input_20.add(Input[i]);
 			}
 
+
 			tensorflow.feed("input",Input,1,6);
 
 //			public long getTotal();
@@ -877,22 +904,6 @@ public class ServiceReader extends Service {
 			tensorflow.run(outputNodes, enableStats);
 			tensorflow.fetch(outputNode, Output); // output is a preallocated float[] in the size of the expected output vector
 
-//			System.out.print(cpuTotal.get(0));
-//			System.out.print(Float.parseFloat(memUsed.get(0)));
-//			System.out.print(Float.parseFloat(memAvailable.get(0)));
-//			System.out.print(Float.parseFloat(memFree.get(0)));
-//			System.out.print(Float.parseFloat(cached.get(0)));
-//			System.out.print(cpuAM.get(0));
-////
-//			for(int i =0;i<6;i++){
-//				System.out.print("input:");
-//				System.out.println(Input[i]);
-//			}
-//
-//			for(int i =0;i<6;i++){
-//				System.out.print("Output:");
-//				System.out.println(Output[i]);
-//			}
 
 			System.out.print("The autoencoder distance is: ");
 			System.out.println(distance(Input,Output));
@@ -907,23 +918,19 @@ public class ServiceReader extends Service {
 //
 //			}
 //			System.out.println("If the distance is large than our threshold, warning!!:");
-			float dis = distance_list(Input,Output)[0];
+			float dis = distance(Input,Output);
 			dis_auto.add(0,dis);
 			dis_RNN.add(0,RNN_dis);
 
-			System.out.println(dis_RNN.get(0));
-			System.out.println(dis_RNN.size());
 
-//			float InverseGamma_alpha = 3;
-//			float InverseGamma_beta = 0.5f;
-//			for(int i = 0; i <=dis_auto.size();i++){
-//				InverseGamma_beta += 1/dis_auto.get(i);
-//			}
+			double mean = mean_std(dis_auto)[0];
+			double var = mean_std(dis_auto)[1]*mean_std(dis_auto)[1];
 
-			//math.Gamma.regularizedGammaQ(dis_auto.size()*InverseGamma_alpha,InverseGamma_beta/dis);
+			GammaDistribution gammaDistribution = new GammaDistribution(mean/var*mean, mean/var);
+			double Output1 = 1 - gammaDistribution.cumulativeProbability(dis);
 
 
-			if(abs(dis)>50||abs(RNN_dis)>50||(abs(dis)>30&&abs(RNN_dis)>30)){
+			if(abs(dis)>50||abs(RNN_dis)>50){
 				int dis_auto_anomaly = max(distance_list(Input,Output));
 				int dis_RNN_anomaly = max(distance_list(Input,Output_RNN));
 				String message = "The anomaly is from: ";

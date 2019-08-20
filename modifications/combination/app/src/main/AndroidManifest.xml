@@ -154,11 +154,16 @@
 
         <activity
             android:name="org.anothermonitor.ActivityMain"
-            android:parentActivityName=".BlacklistActivity"
             android:configChanges="keyboard|keyboardHidden|screenSize|orientation"
+            android:parentActivityName=".MainActivity"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Holo.Light">
+            <!--<meta-data-->
+                <!--android:name="androd.support.PARENT_ACTIVITY"-->
+                <!--android:value=".MainActivity"/>-->
+
             <!--fix the bugy-->
+
         </activity>
         <activity android:name="org.anothermonitor.ActivityProcesses" />
         <activity android:name="org.anothermonitor.ActivityHelp" />

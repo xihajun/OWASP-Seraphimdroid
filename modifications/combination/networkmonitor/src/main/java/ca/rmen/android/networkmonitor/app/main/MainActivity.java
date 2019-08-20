@@ -92,6 +92,8 @@ public class MainActivity extends AppCompatActivity
 
         mPreferenceFragment.findPreference(PREF_SHARE).setOnPreferenceClickListener(mOnPreferenceClickListener);
         mPreferenceFragment.findPreference(PREF_CLEAR_LOG_FILE).setOnPreferenceClickListener(mOnPreferenceClickListener);
+
+        getSupportActionBar().setTitle("Network Monitor");
     }
 
     @Override
